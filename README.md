@@ -1,4 +1,6 @@
-## Project Stages
+## System Architecture
+![截圖 2024-09-23 下午2 48 26](https://github.com/user-attachments/assets/2ba8247f-5e3b-45c8-8a7f-a1295d0feb2a)
+
 
 ### Calibration Stage
 
