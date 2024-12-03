@@ -7,25 +7,80 @@ import requests  # 用于向API端点发送请求
 from channels.generic.websocket import AsyncWebsocketConsumer
 import logging
 import os  # 用于文件操作
+# from .db import insert_to_cdb
+# insert_to_pdb, produce_heatmap
+import io
+import asyncio
+# from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
+from .worker import start
+from .worker2 import start2
+from .queue_manager import q as data_queue
+from .queue_manager import prediction_q as pred_q
+from .queue_manager import model_output_q
+from bson.binary import Binary
+from .worker_prediction import start_prediction_workers
+import base64
+from PIL import Image
+import io
+from .worker_heatmap import start_heatmap_worker
+from .db import produce_heatmap
+from .queue_manager import heatmap_q
+
+# DispatcherConsumer 中
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROCESSED_IMAGES_DIR = os.path.join(BASE_DIR, "../processed_images/prediction_receive")
+CROPPED_IMAGES_DIR = os.path.join(BASE_DIR, "../processed_images/crop_image")
+
+
+os.makedirs(PROCESSED_IMAGES_DIR, exist_ok=True)
+os.makedirs(CROPPED_IMAGES_DIR, exist_ok=True)
+os.makedirs(PROCESSED_IMAGES_DIR, exist_ok=True)
+
 
 logger = logging.getLogger(__name__)
+# Calibration Worker thread
+start()
+start2()
 
 class DispatcherConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        logger.debug("DispatcherConsumer: WebSocket 连接已建立")
+        # logger.debug("DispatcherConsumer: WebSocket 连接已建立")
         await self.accept()
-
+        start_prediction_workers(num_workers=4)
+        start_heatmap_worker()
     async def disconnect(self, close_code):
-        logger.debug(f"DispatcherConsumer: WebSocket 连接关闭: {close_code}")
+        # logger.debug(f"DispatcherConsumer: WebSocket 连接关闭")
+        if not heatmap_q:
+            # Prompt the user for video name and frame number
+            video_name = input("Enter video name (For heatmap queue): ")
+            frame_number = input("Enter frame number (For heatmap queue): ")
+            heatmap_q.append((video_name, frame_number))
+        else:
+            # Ensure proper structure of heatmap_q and process the first item
+            if len(heatmap_q) > 0 and isinstance(heatmap_q[0], tuple):
+                video_name, frame_number = heatmap_q.popleft()  # Correctly use popleft() for deque
+                produce_heatmap(video_name, frame_number)
+            else:
+                print("Heatmap queue structure is invalid.")
+        
+    async def receive(self, text_data="", bytes_data=None):
+        # logger.debug(f"DispatcherConsumer 收到数据: {text_data if text_data else 'No text data'}")
+        if bytes_data:
+            
+            print(f"Binary data received: (length: {len(bytes_data)})")  # 打印二進制數據長度
 
-    async def receive(self, text_data):
-        logger.debug(f"DispatcherConsumer 收到数据: {text_data}")
         try:
-            if text_data.startswith('C'):
+            if text_data.startswith("C"):
+                print(f"Calibration data keys: {list(json.loads(text_data[1:]).keys())}")  # 打印校準數據的 key
                 await self.handle_calibration(text_data[1:])
-            elif text_data.startswith('P'):
-                await self.handle_image_prediction(text_data[1:])
-            elif text_data.startswith('RequestVideoURL'):
+                
+            elif text_data.startswith("P"):
+                prediction_data = json.loads(text_data[1:])
+                # print(f"Prediction data keys: {list(prediction_data.keys())}")  # 打印預測數據的 key
+                await self.handle_prediction(text_data[1:])
+                
+            elif text_data.startswith("RequestVideoURL"):
+                print(f"Video request received, keys: RequestVideoURL")  # 固定鍵值
                 request_data = text_data.split(':')
                 if len(request_data) == 2 and request_data[0] == "RequestVideoURL":
                     try:
@@ -36,114 +91,57 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
                 else:
                     await self.send(text_data=json.dumps({'error': '无效数据'}))
             else:
+                print(f"Unknown message received, unable to determine keys.")  # 無法解析時提示
                 await self.send(text_data=json.dumps({'error': '无效数据'}))
         except Exception as e:
-            logger.error(f"处理数据时出错: {e}")
+            logger.error(f"处理数据时出错")
             await self.send(text_data=json.dumps({'error': str(e)}))
             await self.close()
+        
 
     async def handle_calibration(self, text_data):
-        logger.debug("处理校准数据")
         data = json.loads(text_data)
-        image_data = base64.b64decode(data['image'].split(',')[1])
-        np_arr = np.frombuffer(image_data, np.uint8)
-        image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-
-        if image is None:
-            raise ValueError("图像解码失败")
-
-        image = cv2.resize(image, (320, 240))
-        calibration_spot = data.get('calibration_spot', [0, 0])
-        cropped_image, coordinates = self.detect_and_crop_eye_pair(image)
-
-        # 生成文件名，包括校准点坐标
-        file_name = f'processed_image_{calibration_spot[0]}_{calibration_spot[1]}.jpg'
-        file_path = os.path.join('your_save_directory', file_name)
-
-        # 保存裁剪后的图片
-        cv2.imwrite(file_path, cropped_image)
-        logger.debug(f"图像已保存为: {file_path}")
-
-        # 将处理后的图像发送到机器学习模型
-        _, buffer = cv2.imencode('.jpg', cropped_image)
-        processed_image_base64 = base64.b64encode(buffer).decode('utf-8')
-        self.send_data_to_model(processed_image_base64, calibration_spot, 'calibration')
-
-    async def handle_image_prediction(self, text_data):
-        logger.debug("处理图片预测数据")
-        data = json.loads(text_data)
-        image_data = base64.b64decode(data['image'].split(',')[1])
-        np_arr = np.frombuffer(image_data, np.uint8)
-        image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-
-        if image is None:
-            raise ValueError("图像解码失败")
-
-        image = cv2.resize(image, (320, 240))
-        cropped_image, coordinates = self.detect_and_crop_eye_pair(image)
-
-        cropped_image = cv2.resize(cropped_image, (224, 224))
-        _, buffer = cv2.imencode('.jpg', cropped_image)
-        processed_image_base64 = base64.b64encode(buffer).decode('utf-8')
-
-        # 发送处理后的图像到机器学习模型，进行预测
-        self.send_data_to_model(processed_image_base64, None, 'prediction')
-
-    def detect_and_crop_eye_pair(self, image):
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-        # 应用直方图均衡化
-        gray = cv2.equalizeHist(gray)
-        
-        eye_pair_cascade_path = 'cascades/haarcascade_mcs_eyepair_big.xml'
-        eye_pair_cascade = cv2.CascadeClassifier(eye_pair_cascade_path)
-
-        eyes = eye_pair_cascade.detectMultiScale(
-            gray,
-            scaleFactor=1.1,  # 尝试调整这个值，比如 1.05 或 1.2
-            minNeighbors=6,   # 尝试增加这个值以减少错误检测
-            minSize=(20, 20)  # 视情况调整最小尺寸
-        )
-        coordinates = []
-        cropped_image = image
-
-        for (x, y, w, h) in eyes:
-            coordinates.append((x, y, x + w, y, x, y + h, x + w, y + h))
-            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            
-            # 裁剪出眼睛区域
-            cropped_image = image[y:y + h, x:x + w]
-
-        return cropped_image, coordinates
-                
-
-    def send_data_to_model(self, image_base64, calibration_spot, stage):
+        print("receive data, the ordinates are:",data["coordinates"])
+        # asyncio.create_task(self.icdb(data["calibration_spot"], bytes(data["images"])))
+        # data_queue.put([data, data["images"]])
+ 
+    async def handle_prediction(self, text_data):
         try:
-            payload = {
-                'image': image_base64,
-                'stage': stage,
-            }
-            if stage == 'calibration':
-                payload['calibration_spot'] = calibration_spot
+            data = json.loads(text_data)
+            base64_image = data["images"]
+            relative_time = data["relativeTime"]
+            video_index = data["videoIndex"]
+            video_url = data["videos"][video_index]
 
-            response = requests.post(
-                'http://localhost:8000/api/model/', 
-                json=payload
-            )
+            # Decode Base64 and convert to PIL image
+            image_bytes = base64.b64decode(base64_image)
+            try:
+                image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            except Exception as e:
+                # logger.warning(f"Image decoding failed, creating blank image: {e}")
+                image = Image.new("RGB", (640, 360), color=(0, 0, 0))
 
-            if response.status_code == 200:
-                logger.debug("成功将数据发送到模型端点")
-            else:
-                logger.error(f"发送数据到模型失败: {response.status_code}")
+            # Save image locally and add to queue
+            print("RELATIVE_TIME" + str(relative_time))
+            frame_num = int((relative_time / 1000) * 30) + 1
+            filename = f"{video_url.split('/')[-1]}_frame{frame_num}.jpg"
+            save_path = os.path.join(PROCESSED_IMAGES_DIR, filename)
+            image.save(save_path)
+
+            meta_data = {"video_name": video_url, "frame_number": frame_num}
+            pred_q.append([image, meta_data])
+            # logger.info(f"Prediction data added to queue: {meta_data}")
 
         except Exception as e:
-            logger.error(f"发送数据到模型时出错: {e}")
+            # logger.error(f"Error handling prediction: {e}")
+            await self.send(text_data=json.dumps({'error': 'Error handling prediction'}))
 
     async def handle_video_request(self, num_videos):
+
+
         all_video_urls = [
-            "../videos/001_h264_1K.mp4",
-            "../videos/002_h264_1K.mp4",
-            # 添加更多视频URL
+            "http://192.168.1.66:8000/videos/001_h264_1K.mp4",
+            
         ]
 
         if num_videos > len(all_video_urls):
@@ -152,6 +150,8 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
         selected_videos = sample(all_video_urls, num_videos)
 
         response = {
-            'video_urls': selected_videos
+            'video_urls': selected_videos,
         }
         await self.send(text_data=json.dumps(response))
+
+    
