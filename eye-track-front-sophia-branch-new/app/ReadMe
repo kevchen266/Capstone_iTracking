@@ -1,3 +1,0 @@
-- Revised Files: AndroidManifest.xml, com.example.eyetracking Java package, drawable, layout, values directories, and Gradle scripts.
-- Design Assets: Located in res/layout and res/drawable directories.
-- Application Logic: Implemented in the Java/com.example.eyetracking package and res/values.

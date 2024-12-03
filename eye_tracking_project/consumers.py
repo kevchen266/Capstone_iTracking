@@ -49,19 +49,19 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
         start_prediction_workers(num_workers=4)
         start_heatmap_worker()
     async def disconnect(self, close_code):
-        # logger.debug(f"DispatcherConsumer: WebSocket 连接关闭")
-        if not heatmap_q:
-            # Prompt the user for video name and frame number
-            video_name = input("Enter video name (For heatmap queue): ")
-            frame_number = input("Enter frame number (For heatmap queue): ")
-            heatmap_q.append((video_name, frame_number))
-        else:
-            # Ensure proper structure of heatmap_q and process the first item
-            if len(heatmap_q) > 0 and isinstance(heatmap_q[0], tuple):
-                video_name, frame_number = heatmap_q.popleft()  # Correctly use popleft() for deque
-                produce_heatmap(video_name, frame_number)
-            else:
-                print("Heatmap queue structure is invalid.")
+        logger.debug(f"DispatcherConsumer: WebSocket 连接关闭")
+        # if not heatmap_q:
+        #     # Prompt the user for video name and frame number
+        #     video_name = input("Enter video name (For heatmap queue): ")
+        #     frame_number = input("Enter frame number (For heatmap queue): ")
+        #     heatmap_q.append((video_name, frame_number))
+        # else:
+        #     # Ensure proper structure of heatmap_q and process the first item
+        #     if len(heatmap_q) > 0 and isinstance(heatmap_q[0], tuple):
+        #         video_name, frame_number = heatmap_q.popleft()  # Correctly use popleft() for deque
+        #         produce_heatmap(video_name, frame_number)
+        #     else:
+        #         print("Heatmap queue structure is invalid.")
         
     async def receive(self, text_data="", bytes_data=None):
         # logger.debug(f"DispatcherConsumer 收到数据: {text_data if text_data else 'No text data'}")
