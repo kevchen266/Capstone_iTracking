@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Test</title>
+</head>
+<body>
+    <h1>Video Test</h1>
+    <video id="videoPlayer" controls>
+        <source id="videoSource" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <script>
+        const videoId = "video1"; // 可以根据需要更改
+        const socket = new WebSocket("ws://localhost:8000/ws/predict/video/");
+
+        socket.onopen = function () {
+            socket.send(JSON.stringify({ video_id: videoId }));
+        };
+
+        socket.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            if (data.video_url) {
+                const videoSource = document.getElementById("videoSource");
+                videoSource.src = data.video_url;
+                const videoPlayer = document.getElementById("videoPlayer");
+                videoPlayer.load();
+            } else if (data.error) {
+                console.error("Error:", data.error);
+            }
+        };
+
+        socket.onerror = function (error) {
+            console.error("WebSocket Error:", error);
+        };
+    </script>
+</body>
+</html>
