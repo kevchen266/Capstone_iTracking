@@ -1,0 +1,7 @@
+# Ignore the virtual environment folder
+new_env/
+
+# Ignore the images folder
+images/.DS_Store
+.DS_Store
+videos/
