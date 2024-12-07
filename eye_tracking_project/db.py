@@ -9,12 +9,22 @@ import pandas as pd
 from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 import logging
+import os
+import csv
 
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 
 uri = 'mongodb+srv://eye-gaze-db-user:XEWUsuxRlPjdFcdi@eye-gaze-cluster.rb0cn.mongodb.net/?retryWrites=true&w=majority&appName=eye-gaze-cluster'
 
 client = MongoClient(uri, serverSelectionTimeoutMS=20000)
+
+# Directory setup
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROCESSED_IMAGES_DIR = os.path.join(BASE_DIR, "../processed_images")
+CROPPED_IMAGES_DIR = os.path.join(PROCESSED_IMAGES_DIR, "x_y_int_output")
+csv_path = os.path.join(CROPPED_IMAGES_DIR, "heatmap_coordinates.csv")
+os.makedirs(PROCESSED_IMAGES_DIR, exist_ok=True)
+os.makedirs(CROPPED_IMAGES_DIR, exist_ok=True)
 
 try:
     client.admin.command('ping')
@@ -116,64 +126,163 @@ def insert_to_pdb(video_name, frame, frame_binary, x, y):
         }
         predict_collection.insert_one(new_video)
 
-def produce_heatmap(video_name, frame):
+def produce_heatmap(video_name):
     coordinates = []
-    documents = predict_collection.find({"video_name": video_name, "frame": frame}, {"frame_id": 1, "coordinates": 1, "_id": 0})
+    documents = predict_collection.find({"video_name": video_name}, {"frame_id": 1, "coordinates": 1, "_id": 0}).sort("frame", 1)
+    # print("DOCUMENT", documents)
+    
     for doc in documents:
         frame_id = doc["frame_id"]
+        
         for coordinate in doc['coordinates']:
             coordinates.append(coordinate)
+        
 
-    # data = {
-    #     'x': [coordinate[0] for coordinate in coordinates],
-    #     'y': [coordinate[1] for coordinate in coordinates]
-    # }
+        data = {
+            'x': [coordinate[0] for coordinate in coordinates],
+            'y': [coordinate[1] for coordinate in coordinates]
+        }
 
-    print(coordinates)
-    # print(data)
+        # print(coordinates)
+        # print(data)
 
-    grid_out = fs.get(frame_id)
-    frame = Image.open(io.BytesIO(grid_out.read()))
-    image_width, image_height = frame.width, frame.height # Should be the same, I believe?
+        grid_out = fs.get(frame_id)
+        frame = Image.open(io.BytesIO(grid_out.read()))
+        original_width, original_height = frame.width, frame.height # Should be the same, I believe?
 
-    data = {
-        'x': np.random.randint(700, 1700 + 1, 100),
-        'y': np.random.randint(500, 1100 + 1, 100)
-    }
+        target_width, target_height = 1600, 720
 
-    df = pd.DataFrame(data)
-    # df = df[((df['x'] >= 800) & (df['x'] <= 1000) & (df['y'] <= 900)) | ((df['x'] >= 1001) & (df['x'] <= 1200) & (df['y'] <= 900))]
-    print(df)
+        # Calculate scaling factors for width and height
+        scale_width = target_width / original_width #2048
+        scale_height = target_height / original_height #1080
 
-    heatmap = np.zeros((image_height, image_width)) # Grid layout of a blank heatmap
+        # Use the smaller scale factor to maintain the aspect ratio
+        scale_factor = min(scale_width, scale_height)
 
-    # Populating the heatmap
-    intensity = 100
-    for x, y in zip(df['x'], df['y']):
-        x_int = int(x)
-        y_int = int(y)
-        if 0 <= x_int < image_width and 0 <= y_int < image_height:
-            heatmap[y_int, x_int] += intensity
+        # Calculate new dimensions to fit within 1600x720
+        new_width = int(original_width * scale_factor)
+        new_height = int(original_height * scale_factor)
 
-    # for coordinate in coordinates:
-    #     x = int(coordinate[0])
-    #     y = int(coordinate[1])
-    #     heatmap[y, x] += intensity
+        # Resize the frame
+        resized_frame = frame.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-    sigma = 40
-    smoothed_heatmap = gaussian_filter(heatmap, sigma=sigma)
+        # Update image dimensions for the resized frame
+        image_width, image_height = resized_frame.width, resized_frame.height  # Should now fit 1600x720
+
+        # Create a new blank heatmap with resized dimensions
+        heatmap = np.zeros((image_height, image_width))
+        
+        df = pd.DataFrame(data)
+        # df = df[((df['x'] >= 800) & (df['x'] <= 1000) & (df['y'] <= 900)) | ((df['x'] >= 1001) & (df['x'] <= 1200) & (df['y'] <= 900))]
+        # print(df)
+
+        heatmap = np.zeros((image_height, image_width)) # Grid layout of a blank heatmap
+
+        # Sreen Reselution
+        screen_width, screen_height = 1600, 720
+        # calculate screen and video size ratio
+        scale_x = image_width / screen_width
+        scale_y = image_height / screen_height
+
+        # Populating the heatmap
+        intensity = 100
+        for x, y in zip(df['x'], df['y']):
+            # Multiply the normalized gaze coordinates by the screen resolution, 
+            # then scale them according to the ratio to ensure that the gaze points correctly correspond to the video frame.
+            x_unnormalized = float(x) * screen_width * scale_x   # Width of the screen
+            y_unnormalized = float(y) * screen_height * scale_y   # Height of the screen
+
+            # x_int = int(x_unnormalized)
+            # y_int = int(y_unnormalized)
+            x_int = int(float(x)*image_width)
+            y_int = int(float(y)*image_height)
+     
+            if 0 <= x_int < image_width and 0 <= y_int < image_height:
+                heatmap[y_int, x_int] += intensity
+        
+        # for coordinate in coordinates:
+        #     x = int(coordinate[0])
+        #     y = int(coordinate[1])
+        #     heatmap[y, x] += intensity
+
+        sigma = 40
+        smoothed_heatmap = gaussian_filter(heatmap, sigma=sigma)
+        
+        # Placing the frame
+        plt.figure(figsize=(10, 10 * image_height / image_width))
+        plt.imshow(frame, extent=[0, image_width, 0, image_height], origin='upper')
+
+        # Overlaying the heatmap on top of the frame
+        plt.imshow(smoothed_heatmap, cmap='jet', alpha=0.3, extent=[0, image_width, 0, image_height], origin='lower')
+
+        # Plot dimensions
+        plt.xlim(0, image_width)
+        plt.ylim(0, image_height)
+        
+        plt.colorbar(label="Intensity")
+        # plt.axis('off')
+        plt.show()
+        coordinates = []
+        break
+
+# if not os.path.exists(csv_path):
+#     with open(csv_path, mode='w', newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerow(["x_int", "y_int"])  # CSV headers
+
+# def produce_heatmap(video_name):
+#     coordinates = []
+#     documents = predict_collection.find({"video_name": video_name}, {"frame_id": 1, "coordinates": 1, "_id": 0}).sort("frame", 1)
     
-    # Placing the frame
-    plt.figure(figsize=(10, 10 * image_height / image_width))
-    plt.imshow(frame, extent=[0, image_width, 0, image_height], origin='upper')
+#     for doc in documents:
+#         frame_id = doc["frame_id"]
+        
+#         for coordinate in doc['coordinates']:
+#             coordinates.append(coordinate)
 
-    # Overlaying the heatmap on top of the frame
-    plt.imshow(smoothed_heatmap, cmap='jet', alpha=0.3, extent=[0, image_width, 0, image_height], origin='lower')
+#         data = {
+#             'x': [coordinate[0] for coordinate in coordinates],
+#             'y': [coordinate[1] for coordinate in coordinates]
+#         }
 
-    # Plot dimensions
-    plt.xlim(0, image_width)
-    plt.ylim(0, image_height)
-    
-    plt.colorbar(label="Intensity")
-    # plt.axis('off')
-    plt.show()
+#         grid_out = fs.get(frame_id)
+#         frame = Image.open(io.BytesIO(grid_out.read()))
+#         image_width, image_height = frame.width, frame.height
+
+#         df = pd.DataFrame(data)
+
+#         heatmap = np.zeros((image_height, image_width))
+
+#         # Screen resolution
+#         screen_width, screen_height = 1280, 720
+#         scale_x = image_width / screen_width
+#         scale_y = image_height / screen_height
+
+#         intensity = 100
+#         with open(csv_path, mode='a', newline='') as file:
+#             writer = csv.writer(file)
+            
+#             for x, y in zip(df['x'], df['y']):
+#                 x_unnormalized = float(x) * screen_width * scale_x
+#                 y_unnormalized = float(y) * screen_height * scale_y
+#                 x_int = int(x_unnormalized)
+#                 y_int = int(y_unnormalized)
+
+#                 # Write to CSV
+#                 writer.writerow([x_int, y_int])
+                
+#                 if 0 <= x_int < image_width and 0 <= y_int < image_height:
+#                     heatmap[y_int, x_int] += intensity
+
+#         sigma = 40
+#         smoothed_heatmap = gaussian_filter(heatmap, sigma=sigma)
+
+#         plt.figure(figsize=(10, 10 * image_height / image_width))
+#         plt.imshow(frame, extent=[0, image_width, 0, image_height], origin='upper')
+#         plt.imshow(smoothed_heatmap, cmap='jet', alpha=0.3, extent=[0, image_width, 0, image_height], origin='lower')
+#         plt.xlim(0, image_width)
+#         plt.ylim(0, image_height)
+#         plt.colorbar(label="Intensity")
+#         plt.show()
+#         coordinates = []
+#         break

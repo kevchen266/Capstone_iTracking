@@ -11,14 +11,23 @@ from .queue_manager import prediction_q, model_output_q
 from .CNN_model.Gazetrack import Gazetrack
 import numpy as np
 from .worker_heatmap import process_prediction
-logger = logging.getLogger(__name__)
+from pathlib import Path
+from .events import prediction_done, prediction_processing_done
+
+# logger = logging.getLogger(__name__)
 
 # Initialize the CNN model
 model = Gazetrack()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "CNN_model/cnn_model_weights.pth")
-model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device("cpu")))
-model.eval()
+MODEL_PATH_exist = Path(BASE_DIR, "CNN_model/cnn_model_weights.pth")
+# print("OUTSIDE WHILE LOOP")
+# while not MODEL_PATH.exists():
+#     print( "INSIDE WHILE LOOP")
+#     continue
+# model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device("cpu")))
+
+# model.eval()
 
 # Define image transformations
 transform = transforms.Compose([
@@ -31,6 +40,7 @@ transform = transforms.Compose([
 output_dir = os.path.join(BASE_DIR, "../processed_images/output")
 os.makedirs(output_dir, exist_ok=True)
 output_csv_path = os.path.join(output_dir, "predictions.csv")
+output_csv_path2 = os.path.join(output_dir, "outputs.csv")
 
 # Initialize the CSV file
 def initialize_output_csv():
@@ -41,10 +51,29 @@ def initialize_output_csv():
             writer.writerow(["Video Name", "Frame Number", "Gaze X", "Gaze Y"])
             # logger.info(f"Initialized output CSV at {output_csv_path}")
 
+# def initialize_output_csv2():
+#     """Initialize the CSV file with headers."""
+#     if not os.path.exists(output_csv_path2):
+#         with open(output_csv_path2, mode='w', newline='') as file:
+#             writer = csv.writer(file)
+#             writer.writerow(["Gaze X", "Gaze Y"])
+#             # logger.info(f"Initialized output CSV at {output_csv_path}")
+
 initialize_output_csv()
+# initialize_output_csv2()
 
 def process_prediction():
-    """Process images from the queue, crop eye regions, predict gaze, save results, and output to CSV."""
+    """Process images from the queue, crop eye regions, predict gaze, save results, and output to CSV.
+        make sure on update_coonmoel pthexist before runing into prediction.
+    """
+    
+    while not MODEL_PATH_exist.exists():
+        continue
+    time.sleep(2)
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device("cpu")))
+    model.eval()
+
+
     face_mesh = mp.solutions.face_mesh.FaceMesh(refine_landmarks=True)
     processed_images_dir = os.path.join(BASE_DIR, "../processed_images/crop_image")
     os.makedirs(processed_images_dir, exist_ok=True)
@@ -60,14 +89,18 @@ def process_prediction():
                 results = face_mesh.process(rgb_image)
                 if results.multi_face_landmarks:
                     for face_landmarks in results.multi_face_landmarks:
-                        left_eye, right_eye = crop_eyes(rgb_image, face_landmarks)
+                        # left_eye, right_eye = crop_eyes(rgb_image, face_landmarks) image flip
+                        right_eye, left_eye = crop_eyes(rgb_image, face_landmarks) 
+
                         if left_eye is not None and right_eye is not None:
                             save_cropped_images(left_eye, right_eye, metadata, processed_images_dir)
                             result = send_to_cnn_model(left_eye, right_eye)
                             if result:
+                                # with open(output_csv_path2, mode='a', newline='') as file:
+                                #     writer = csv.writer(file)
+                                #     writer.writerow([result["coordinates"][0], result["coordinates"][1]])
                                 store_prediction(metadata, result)                                
                                 append_prediction_to_csv(metadata, result)
-                                
                         else:
                             # logger.warning(f"Failed to crop eyes for frame {metadata['frame_number']}")
                             print()
@@ -79,6 +112,10 @@ def process_prediction():
                 print()
         else:
             time.sleep(0.1)
+        # elif not prediction_q and not prediction_done.is_set():
+        #     time.sleep(0.1)
+        # elif not prediction_q and prediction_done.is_set():
+        #     prediction_processing_done.set()
 
 def save_cropped_images(left_eye, right_eye, metadata, save_dir):
     """Save cropped images to the local directory."""
@@ -130,7 +167,8 @@ def crop_eyes(image, face_landmarks, expand_ratio=0.5, target_size=224):
             x_min, x_max, y_min, y_max = bbox
             eye_image = image[y_min:y_max, x_min:x_max]
             if eye_image.size > 0:
-                return cv2.resize(eye_image, (target_size, target_size))
+                resized_eye = cv2.resize(eye_image, (target_size, target_size))
+                return cv2.cvtColor(resized_eye, cv2.COLOR_BGR2RGB)  # Convert to RGB
         return None
 
     left_eye = extract_eye_region(left_eye_indices)
@@ -166,10 +204,17 @@ def append_prediction_to_csv(metadata, result):
     try:
         video_name = metadata["video_name"]
         frame_number = metadata["frame_number"]
-        x, y = result["gaze_coordinates"]
+        x_normalized, y_normalized = result["gaze_coordinates"]
+        
+        # Unnormalize coordinates using the screen resolution
+        screen_width = 1280
+        screen_height = 720
+        x_unnormalized = x_normalized * screen_width
+        y_unnormalized = y_normalized * screen_height
+
         with open(output_csv_path, mode='a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([video_name, frame_number, f"{x:.4f}", f"{y:.4f}"])
+            writer.writerow([video_name, frame_number, f"{x_unnormalized:.4f}", f"{y_unnormalized:.4f}"])
         # logger.info(f"Prediction for frame {frame_number} written to CSV")
     except Exception as e:
         # logger.error(f"Error appending prediction to CSV: {e}")
