@@ -10,39 +10,15 @@
 
 **Objective**: To capture and preprocess user-specific images, enabling the model to undergo mini training for improved accuracy and personalization of eye-gaze tracking.
 
-**Process**:
-
-Capture user images in real-time.
-
-Preprocess and normalize the images for model compatibility.
-
-Train the model using mini-batches of user-specific data to personalize predictions.
 
 ### Prediction Stage (CNN Model Eye-Gaze Prediction)
 
 **Objective**: To analyze processed user images and generate precise eye-gaze coordinate predictions using the calibrated CNN model.
 
-**Process**:
-
-
-Input the preprocessed user images into the trained CNN model.
-
-Generate real-time predictions for 2D eye-gaze coordinates.
-
-Output the gaze coordinates for further visualization or analysis.
 
 
 ### Heatmap Generation Stage (Visualization of Eye-Gaze Prediction)
 **Objective**: To generate a heatmap that visualizes the distribution of predicted eye-gaze coordinates, highlighting the regions where the user is focusing based on the model's predictions.
-
-**Process**:
-
-
-Aggregate predicted gaze coordinates over a specified duration or interaction.
-
-Map the coordinates onto the screen or image context.
-
-Generate a heatmap to represent user focus visually.
 
 
 ## Setting Up the Environment
