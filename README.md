@@ -5,6 +5,7 @@
 
 **Data Visualization**: Heatmap generation provides intuitive insights into user focus areas.
 
+![image](https://github.com/user-attachments/assets/24cec394-393c-49c9-aa34-de0bf75770de)
 
 ### Calibration Stage (Mini Training)
 
