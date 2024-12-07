@@ -1,14 +1,15 @@
 ## Key Features
-****Personalization****: Calibration adapts the model to individual users for higher accuracy.
+**Personalization**: Calibration adapts the model to individual users for higher accuracy.
 
-***Real-Time Prediction***: The CNN model predicts gaze coordinates at 30 FPS.
+**Real-Time Prediction**: The CNN model predicts gaze coordinates at 30 FPS.
 
-Data Visualization: Heatmap generation provides intuitive insights into user focus areas.
+**Data Visualization**: Heatmap generation provides intuitive insights into user focus areas.
 
 
 ### Calibration Stage (Mini Training)
 
 **Objective**: To capture and preprocess user-specific images, enabling the model to undergo mini training for improved accuracy and personalization of eye-gaze tracking.
+
 **Process**:
 
 Capture user images in real-time.
