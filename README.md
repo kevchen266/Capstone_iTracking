@@ -1,6 +1,8 @@
 ## Key Features
 Personalization: Calibration adapts the model to individual users for higher accuracy.
+
 Real-Time Prediction: The CNN model predicts gaze coordinates at 30 FPS.
+
 Data Visualization: Heatmap generation provides intuitive insights into user focus areas.
 
 
