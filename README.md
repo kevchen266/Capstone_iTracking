@@ -1,25 +1,37 @@
-## System Architecture
-![截圖 2024-09-23 下午2 48 26](https://github.com/user-attachments/assets/2ba8247f-5e3b-45c8-8a7f-a1295d0feb2a)
+## Key Features
+Personalization: Calibration adapts the model to individual users for higher accuracy.
+Real-Time Prediction: The CNN model predicts gaze coordinates at 30 FPS.
+Data Visualization: Heatmap generation provides intuitive insights into user focus areas.
 
 
 ### Calibration Stage (Mini Training)
 
 **Objective**: To capture and preprocess user-specific images, enabling the model to undergo mini training for improved accuracy and personalization of eye-gaze tracking.
+**Process**:
 
-1. **User Setup**: The user positions their head in a frame and looks at different spots for calibration.
-2. **Data Collection**: The frontend sends real-time images to the backend at 30 frames per second.
-3. **Image Processing**: The backend processes these images, crops the eye area, and sends them to the machine learning model for training. The goal is to learn the user's eye movement patterns.
+Capture user images in real-time.
+Preprocess and normalize the images for model compatibility.
+Train the model using mini-batches of user-specific data to personalize predictions.
 
 ### Prediction Stage (CNN Model Eye-Gaze Prediction)
 
 **Objective**: To analyze processed user images and generate precise eye-gaze coordinate predictions using the calibrated CNN model.
 
-1. **Image Capture**: Similar to the calibration stage, the frontend sends real-time images to the backend at 30 frames per second.
-2. **Image Processing**: The backend processes the images, crops the eye area, and sends them to the machine learning model for prediction. The model predicts the eye gaze spot coordinates and display heatmap on video.
-3. **Video Playback**:  The backend sends the corresponding video URL to the frontend for playback.
+**Process**:
+
+Input the preprocessed user images into the trained CNN model.
+Generate real-time predictions for 2D eye-gaze coordinates.
+Output the gaze coordinates for further visualization or analysis.
+
 
 ### Heatmap Generation Stage (Visualization of Eye-Gaze Prediction)
 **Objective**: To generate a heatmap that visualizes the distribution of predicted eye-gaze coordinates, highlighting the regions where the user is focusing based on the model's predictions.
+
+**Process**:
+
+Aggregate predicted gaze coordinates over a specified duration or interaction.
+Map the coordinates onto the screen or image context.
+Generate a heatmap to represent user focus visually.
 
 
 ## Setting Up the Environment
@@ -55,3 +67,8 @@
     ```
 
 3. Ensure the frontend and backend are correctly communicating over the configured IP and URL.
+
+## System Architecture
+![截圖 2024-09-23 下午2 48 26](https://github.com/user-attachments/assets/2ba8247f-5e3b-45c8-8a7f-a1295d0feb2a)
+Overview
+The system is designed to track user eye-gaze behavior through a three-stage pipeline: Calibration, Prediction, and Heatmap Generation. These stages work together to process user-specific data, predict eye-gaze coordinates, and visualize the results effectively.
