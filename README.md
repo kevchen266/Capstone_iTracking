@@ -5,7 +5,7 @@
 
 **Data Visualization**: Heatmap generation provides intuitive insights into user focus areas.
 
-[![image](https://github.com/user-attachments/assets/24cec394-393c-49c9-aa34-de0bf75770de)](https://drive.google.com/file/d/1-0CaW9Lbr7oO4c62jiWdgf5DE8O13tmg/view?usp=sharing)
+[![观看视频](https://drive.google.com/file/d/1-0CaW9Lbr7oO4c62jiWdgf5DE8O13tmg/view?usp=sharing)
 
 
 
