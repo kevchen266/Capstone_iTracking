@@ -1,12 +1,15 @@
-## Key Features
+## CNN Model Workflow
 **Personalization**: Calibration adapts the model to individual users for higher accuracy.
 
 **Real-Time Prediction**: The CNN model predicts gaze coordinates at 30 FPS.
 
 **Data Visualization**: Heatmap generation provides intuitive insights into user focus areas.
 
-![image](https://github.com/user-attachments/assets/24cec394-393c-49c9-aa34-de0bf75770de)
+[![image](https://github.com/user-attachments/assets/24cec394-393c-49c9-aa34-de0bf75770de)](https://drive.google.com/file/d/1-0CaW9Lbr7oO4c62jiWdgf5DE8O13tmg/view?usp=sharing)
 
+
+
+## Application Workflow
 ### Calibration Stage (Mini Training)
 
 **Objective**: To capture and preprocess user-specific images, enabling the model to undergo mini training for improved accuracy and personalization of eye-gaze tracking.
