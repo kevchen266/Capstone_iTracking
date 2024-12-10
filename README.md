@@ -5,11 +5,13 @@
 
 **Data Visualization**: Heatmap generation provides intuitive insights into user focus areas.
 
-[![观看视频](https://drive.google.com/file/d/1-0CaW9Lbr7oO4c62jiWdgf5DE8O13tmg/view?usp=sharing)
+
 
 
 
 ## Application Workflow
+[Watch Applicatino video](https://drive.google.com/file/d/1-0CaW9Lbr7oO4c62jiWdgf5DE8O13tmg/view?usp=sharing)
+
 ### Calibration Stage (Mini Training)
 
 **Objective**: To capture and preprocess user-specific images, enabling the model to undergo mini training for improved accuracy and personalization of eye-gaze tracking.
