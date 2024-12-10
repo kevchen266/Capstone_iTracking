@@ -24,12 +24,12 @@
 ### Prediction Stage (CNN Model Eye-Gaze Prediction)
 
 **Objective**: To analyze processed user images and generate precise eye-gaze coordinate predictions using the calibrated CNN model.
-![image](https://github.com/user-attachments/assets/ec4f6462-f331-46ec-90a2-cf9f8cd965bf)
 
 
 ### Heatmap Generation Stage (Visualization of Eye-Gaze Prediction)
 **Objective**: To generate a heatmap that visualizes the distribution of predicted eye-gaze coordinates, highlighting the regions where the user is focusing based on the model's predictions.
 
+![image](https://github.com/user-attachments/assets/ec4f6462-f331-46ec-90a2-cf9f8cd965bf)
 
 ## Setting Up the Environment
 
