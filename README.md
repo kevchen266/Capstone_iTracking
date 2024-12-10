@@ -5,12 +5,16 @@
 
 **Data Visualization**: Heatmap generation provides intuitive insights into user focus areas.
 
+![截圖 2024-12-09 下午11 03 54](https://github.com/user-attachments/assets/468c7ecf-4105-4c04-b96c-b0ff8620aeb3)
 
 
 
 
 ## Application Workflow
 [Watch Applicatino video](https://drive.google.com/file/d/1-0CaW9Lbr7oO4c62jiWdgf5DE8O13tmg/view?usp=sharing)
+
+![image](https://github.com/user-attachments/assets/ec4f6462-f331-46ec-90a2-cf9f8cd965bf)
+
 
 ### Calibration Stage (Mini Training)
 
