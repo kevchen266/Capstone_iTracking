@@ -13,7 +13,7 @@
 ## Application Workflow
 [Watch Applicatino video](https://drive.google.com/file/d/1-0CaW9Lbr7oO4c62jiWdgf5DE8O13tmg/view?usp=sharing)
 
-![image](https://github.com/user-attachments/assets/ec4f6462-f331-46ec-90a2-cf9f8cd965bf)
+
 
 
 ### Calibration Stage (Mini Training)
@@ -24,7 +24,7 @@
 ### Prediction Stage (CNN Model Eye-Gaze Prediction)
 
 **Objective**: To analyze processed user images and generate precise eye-gaze coordinate predictions using the calibrated CNN model.
-
+![image](https://github.com/user-attachments/assets/ec4f6462-f331-46ec-90a2-cf9f8cd965bf)
 
 
 ### Heatmap Generation Stage (Visualization of Eye-Gaze Prediction)
