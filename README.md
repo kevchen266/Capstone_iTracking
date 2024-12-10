@@ -1,9 +1,5 @@
 ## CNN Model Workflow
-**Personalization**: Calibration adapts the model to individual users for higher accuracy.
-
-**Real-Time Prediction**: The CNN model predicts gaze coordinates at 30 FPS.
-
-**Data Visualization**: Heatmap generation provides intuitive insights into user focus areas.
+This CNN-based architecture predicts gaze coordinates (x, y) using facial and eye images from the [MPIIGaze dataset]([https://www.mpi-inf.mpg.de/home](https://www.mpi-inf.mpg.de/departments/computer-vision-and-machine-learning/research/gaze-based-human-computer-interaction/appearance-based-gaze-estimation-in-the-wild)). Left and right eye images are processed independently through identical CNNs with convolutional layers to extract spatial features, pooling layers to reduce dimensions, and fully connected layers (FC-F1 and FC-FC1) to create dense representations. The face image follows a similar pipeline, capturing global context like head orientation. These features are fused into a single vector, passed through fully connected layers, and output gaze predictions. The MPIIGaze dataset provides eye and face images with gaze annotations, enabling the model to map visual features to gaze coordinates effectively.
 
 ![截圖 2024-12-09 下午11 03 54](https://github.com/user-attachments/assets/468c7ecf-4105-4c04-b96c-b0ff8620aeb3)
 
