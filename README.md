@@ -40,16 +40,16 @@ Make sure to provide the correct movie URL when prompted. This video URL corresp
 
 The application utilizes multithreading to manage different stages concurrently within the WebSocket consumer. Threads are initiated in the `connect` method of the WebSocket consumer to ensure tasks run in parallel:
 
-1. **Prediction Thread**:  
+1. **Calibration Thread**:  
    Starts multiple workers for prediction tasks:
    ```python
-   start_prediction_workers(num_workers=4)
+   start_calibration_workers()
 
 1. **Prediction Thread**:  
    Starts multiple workers for prediction tasks:
    ```python
    start_prediction_workers(num_workers=4)
-2. Heatmap Generation Thread
+2. **Heatmap Generation Thread**
     Starts multiple workers for prediction tasks:
    ```python
    start_heatmap_worker()
