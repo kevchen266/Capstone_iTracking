@@ -27,7 +27,7 @@ Make sure to provide the correct movie URL when prompted. This video URL corresp
 
 ### Prediction Stage (CNN Model Eye-Gaze Prediction)
 
-**Objective**: Objective: Analyze processed user images to predict precise eye-gaze coordinates using a calibrated CNN model. During this stage, the user watches a video while eye images are captured, processed, and input into the CNN model for real-time gaze prediction.
+**Objective**: Analyze processed user images to predict precise eye-gaze coordinates using a calibrated CNN model. During this stage, the user watches a video while eye images are captured, processed, and input into the CNN model for real-time gaze prediction.
 
 
 ### Heatmap Generation Stage (Visualization of Eye-Gaze Prediction)
