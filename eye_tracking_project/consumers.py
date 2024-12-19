@@ -209,7 +209,7 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
 
 
         all_video_urls = [
-            "http://192.168.1.66:8000/videos/001_h264_1K.mp4",
+            "http://172.31.231.33:8000/videos/001_h264_1K.mp4",
             
         ]
 
