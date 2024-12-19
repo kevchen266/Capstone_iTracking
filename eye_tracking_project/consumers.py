@@ -56,20 +56,23 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # logger.debug("DispatcherConsumer: WebSocket 连接已建立")
         await self.accept()
-        calibration_phase = cache.get("calibration_phase", False)
-        prediction_phase = cache.get("prediction_phase", False)
-        # start()
-        # self.calibration_phase = True
-        # self.prediction_phase = False
-        if calibration_phase and not prediction_phase:
-            # start_calibration_workers()
-            # self.calibration_phase = False
-            # self.prediction_phase = True
-            cache.set("calibration_phase", False)
-            cache.set("prediction_phase", True)
-        else:
-            print("Prediction Phase Starting")
-            # time.sleep(30)
+        # calibration_phase = cache.get("calibration_phase", True)
+        # prediction_phase = cache.get("prediction_phase", False)
+        # print(f"Calibration Phase: {calibration_phase}, Prediction Phase: {prediction_phase}")
+        # # start()
+        # # self.calibration_phase = True
+        # # self.prediction_phase = False
+        # if calibration_phase and not prediction_phase:
+        #     start_calibration_workers()
+        #     # self.calibration_phase = False
+        #     # self.prediction_phase = True
+        #     cache.set("calibration_phase", False)
+        #     cache.set("prediction_phase", True)
+        # else:
+        #     print("Prediction Phase Starting")
+        #     # time.sleep(30)
+        #     start_prediction_workers(num_workers=4)
+        #     start_heatmap_worker()
         start_prediction_workers(num_workers=4)
         start_heatmap_worker()
     async def disconnect(self, close_code):
@@ -143,7 +146,7 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
     async def handle_calibration(self, text_data):
         calibration_q.append(json.loads(text_data))
         print(json.loads(text_data)["coordinates"])
-
+        print(f"Data added to calibration queue. Current size: {len(calibration_q)}")
         # if len(calibration_q) == 0 and not self.calibration_done:
         #     self.calibration_done = True  # 标记为已完成
         #     print("Calibration phase completed. Starting mini-training...")
@@ -195,7 +198,7 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
 
 
         all_video_urls = [
-            "http://172.31.231.33:8000/videos/001_h264_1K.mp4",
+            "http://192.168.1.66:8000/videos/001_h264_1K.mp4",
             
         ]
 
