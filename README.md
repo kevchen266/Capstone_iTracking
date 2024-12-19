@@ -7,18 +7,18 @@ This CNN-based architecture predicts gaze coordinates (x, y) using facial and ey
 
 
 
-## Application Workflow
+## **Application Workflow**
 [Watch Applicatino video](https://drive.google.com/file/d/1-0CaW9Lbr7oO4c62jiWdgf5DE8O13tmg/view?usp=sharing)
 
 
 
 
-### Calibration Stage (Mini Training)
+### **Calibration Stage (Mini Training)**
 
 **Objective**: To capture and preprocess user-specific images, enabling the model to undergo mini training for improved accuracy and personalization of eye-gaze tracking.
 
 **Instructions**:
-Before starting the prediction stage, the console will prompt you to specify the movie you want to play. For example:
+After Calibration, the console will prompt you to specify the movie you want to play. For example:
 ```sh
 Enter the movie URL: http://172.31.231.33:8000/videos/001_h264_1K.mp4
 
