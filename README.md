@@ -35,6 +35,24 @@ Make sure to provide the correct movie URL when prompted. This video URL corresp
 
 ![image](https://github.com/user-attachments/assets/ec4f6462-f331-46ec-90a2-cf9f8cd965bf)
 
+
+## **Thread Management**
+
+The application utilizes multithreading to manage different stages concurrently within the WebSocket consumer. Threads are initiated in the `connect` method of the WebSocket consumer to ensure tasks run in parallel:
+
+1. **Prediction Thread**:  
+   Starts multiple workers for prediction tasks:
+   ```python
+   start_prediction_workers(num_workers=4)
+
+1. **Prediction Thread**:  
+   Starts multiple workers for prediction tasks:
+   ```python
+   start_prediction_workers(num_workers=4)
+2. Heatmap Generation Thread
+    Starts multiple workers for prediction tasks:
+   ```python
+   start_heatmap_worker()
 ## Setting Up the Environment
 
 1. Clone the repository:
