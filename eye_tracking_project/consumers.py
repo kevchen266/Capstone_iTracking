@@ -54,6 +54,11 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
         
 
     async def connect(self):
+        """
+        Handles the WebSocket connection establishment.
+        - Accepts the WebSocket connection.
+        - Starts prediction and heatmap workers immediately after connection.
+        """
         # logger.debug("DispatcherConsumer: WebSocket 连接已建立")
         await self.accept()
         # calibration_phase = cache.get("calibration_phase", True)
@@ -76,6 +81,12 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
         start_prediction_workers(num_workers=4)
         start_heatmap_worker()
     async def disconnect(self, close_code):
+        """
+        Handles WebSocket disconnection events.
+        - Ensures heatmap queue (`heatmap_q`) is properly managed.
+        - Prompts the user for input if the heatmap queue is empty.
+        - Processes the heatmap queue if items exist.
+        """
         # logger.debug(f"DispatcherConsumer: WebSocket 连接关闭")
         
         # if prediction_done.is_set():
