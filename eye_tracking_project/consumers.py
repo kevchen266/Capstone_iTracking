@@ -57,7 +57,7 @@ class DispatcherConsumer(AsyncWebsocketConsumer):
         """
         Handles the WebSocket connection establishment.
         - Accepts the WebSocket connection.
-        - Starts prediction and heatmap workers immediately after connection.
+        - Allows starting different stages (e.g., prediction, heatmap generation) by initiating separate threads.
         """
         # logger.debug("DispatcherConsumer: WebSocket 连接已建立")
         await self.accept()
