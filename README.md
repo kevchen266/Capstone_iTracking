@@ -17,7 +17,7 @@ This CNN-based architecture predicts gaze coordinates (x, y) using facial and ey
 
 **Objective**: To capture and preprocess user-specific images, enabling the model to undergo mini training for improved accuracy and personalization of eye-gaze tracking.
 
-
+before starting the prediction stage, you will need to input the the movie that you want to play on the console. () 
 ### Prediction Stage (CNN Model Eye-Gaze Prediction)
 
 **Objective**: To analyze processed user images and generate precise eye-gaze coordinate predictions using the calibrated CNN model.
