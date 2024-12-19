@@ -38,7 +38,7 @@ Make sure to provide the correct movie URL when prompted. This video URL corresp
 
 ## **Thread Management**
 
-The application utilizes multithreading to manage different stages concurrently within the WebSocket consumer. Threads are initiated in the `connect` method of the WebSocket consumer to ensure tasks run in parallel:
+The application utilizes multithreading to manage different stages concurrently within the WebSocket `consumer`. Threads are initiated in the `connect` method of the WebSocket consumer to ensure tasks run in parallel:
 
 1. **Calibration Thread**:  
    Starts multiple workers for prediction tasks:
