@@ -7,7 +7,7 @@ This CNN-based architecture predicts gaze coordinates (x, y) using facial and ey
 
 
 
-## **Application Workflow**
+## **Application Demo**
 [Watch Applicatino video](https://drive.google.com/file/d/1-0CaW9Lbr7oO4c62jiWdgf5DE8O13tmg/view?usp=sharing)
 
 
